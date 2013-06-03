@@ -35,12 +35,13 @@ private:
 
 	//Drawings
 	void DrawCrosshair(int x, int y);
-	void DrawBox(int x, int y);
+	void DrawBox(int posX, int posY, int size);
 	void DrawHorizontalLine(int y);
 
 	//Animations
 	void UpdateCrosshair();
-	void UpdateBox(int speed);
+	void UpdateBox();
+	void UpdateHorizontalLine();
 
 	// TODO: User functions go here
 
@@ -57,9 +58,15 @@ private:
 	int boxX;
 	int boxY;
 
+	int speed;
+	int boxSize;
+
+
 	int lineY;
 
 	bool hit;
+
+
 
 	// TODO: User variables go here
 

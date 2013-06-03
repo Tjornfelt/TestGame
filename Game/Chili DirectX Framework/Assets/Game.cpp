@@ -19,6 +19,9 @@
  *	along with The Chili DirectX Framework.  If not, see <http://www.gnu.org/licenses/>.  *
  ******************************************************************************************/
 #include "Game.h"
+#include <cstdlib>
+#include <ctime>
+
 
 Game::Game( HWND hWnd,const KeyboardServer& kServer )
 :	gfx ( hWnd ),
@@ -27,17 +30,25 @@ Game::Game( HWND hWnd,const KeyboardServer& kServer )
 	//remember to initialize the variables
 	crosshairX(0),
 	crosshairY(0),
-	boxX(200),
-	boxY(280),
-	lineY(400)
-{}
+	boxX(50),
+	boxY(50),
+	lineY(400),
+	speed(3),
+	boxSize(50)
+{
+	srand((unsigned)time(0));
+
+}
 
 //Model
 void Game::Go()
 {
+	//Update the values in the model
 	UpdateCrosshair();
-	UpdateBox(1);
+	UpdateBox();
+	UpdateHorizontalLine();
 
+	//Then write them to the view
 	gfx.BeginFrame();
 	ComposeFrame();
 	gfx.EndFrame();
@@ -46,53 +57,35 @@ void Game::Go()
 //Drawings
 void Game::DrawCrosshair(int x, int y)
 {
-
 	//vertical top
-	gfx.PutPixel(4 + x, 0 + y, 255,255,255);
-	gfx.PutPixel(4 + x, 1 + y, 255,255,255);
-	gfx.PutPixel(4 + x, 2 + y, 255,255,255);
+	gfx.PutPixel(0 + x, -3 + y, 255,255,255);
+	gfx.PutPixel(0 + x, -2 + y, 255,255,255);
+	gfx.PutPixel(0 + x, -1 + y, 255,255,255);
 
 	//vertical bottom
-	gfx.PutPixel(4 + x, 4 + y, 255,255,255);
-	gfx.PutPixel(4 + x, 5 + y, 255,255,255);
-	gfx.PutPixel(4 + x, 6 + y, 255,255,255);
-
-	//horizontal left
-	gfx.PutPixel(2 + x, 3 + y, 255,255,255);
-	gfx.PutPixel(1 + x, 3 + y, 255,255,255);
+	gfx.PutPixel(0 + x, 1 + y, 255,255,255);
+	gfx.PutPixel(0 + x, 2 + y, 255,255,255);
 	gfx.PutPixel(0 + x, 3 + y, 255,255,255);
 
-	//horizontal right
-	gfx.PutPixel(6 + x, 3 + y, 255,255,255);
-	gfx.PutPixel(7 + x, 3 + y, 255,255,255);
-	gfx.PutPixel(8 + x, 3 + y, 255,255,255);
-}
-void Game::DrawBox(int x, int y)
-{
-	for(int index = 0; index < 20; index++)
-	{
-		gfx.PutPixel(x + index,0+y,255,255,0);
-		gfx.PutPixel(x + index,1+y,255,255,0);
-		gfx.PutPixel(x + index,2+y,255,255,0);
-		gfx.PutPixel(x + index,3+y,255,255,0);
-		gfx.PutPixel(x + index,4+y,255,255,0);
-		gfx.PutPixel(x + index,5+y,255,255,0);
-		gfx.PutPixel(x + index,6+y,255,255,0);
-		gfx.PutPixel(x + index,7+y,255,255,0);
-		gfx.PutPixel(x + index,8+y,255,255,0);
-		gfx.PutPixel(x + index,9+y,255,255,0);
-		gfx.PutPixel(x + index,10+y,255,255,0);
-		gfx.PutPixel(x + index,11+y,255,255,0);
-		gfx.PutPixel(x + index,12+y,255,255,0);
-		gfx.PutPixel(x + index,13+y,255,255,0);
-		gfx.PutPixel(x + index,14+y,255,255,0);
-		gfx.PutPixel(x + index,15+y,255,255,0);
-		gfx.PutPixel(x + index,16+y,255,255,0);
-		gfx.PutPixel(x + index,17+y,255,255,0);
-		gfx.PutPixel(x + index,18+y,255,255,0);
-		gfx.PutPixel(x + index,19+y,255,255,0);
-	}
+	//horizontal left
+	gfx.PutPixel(-3 + x, 0 + y, 255,255,255);
+	gfx.PutPixel(-2 + x, 0 + y, 255,255,255);
+	gfx.PutPixel(-1 + x, 0 + y, 255,255,255);
 
+	//horizontal right
+	gfx.PutPixel(1 + x, 0 + y, 255,255,255);
+	gfx.PutPixel(2 + x, 0 + y, 255,255,255);
+	gfx.PutPixel(3 + x, 0 + y, 255,255,255);
+}
+void Game::DrawBox(int posX, int posY, int size)
+{
+	for(int x = 0; x < size; x++)
+	{
+		for(int y = 0; y < size; y++)
+		{
+			gfx.PutPixel(x + posX, y + posY, 255,255,0);
+		}
+	}
 }
 void Game::DrawHorizontalLine(int y)
 {
@@ -108,8 +101,6 @@ void Game::DrawHorizontalLine(int y)
 //Animations
 void Game::UpdateCrosshair()
 {
-	int speed = 3;
-
 	if(kbd.LeftIsPressed())
 	{
 		crosshairX = crosshairX - speed;
@@ -131,114 +122,123 @@ void Game::UpdateCrosshair()
 	}
 
 }
-void Game::UpdateBox(int speed)
+void Game::UpdateBox()
 {
-	hit = false;
+	int boxCenterX = boxX + (boxSize/2);
+	int boxCenterY = boxY + (boxSize/2);
 
-	//boxX = boxX + speed;
+	int xToCenter = boxCenterX - crosshairX;
+	int yToCenter = boxCenterY - crosshairY;
 
-	if(kbd.EnterIsPressed())
+	//Calculation of hitbox is a little weird. All calculations are based on the top left pixel, so we need to calculate for distance to
+	//center of crosshair, and take into consideration the width and height of the box.
+
+	//X values...
+	if(crosshairX > boxX && crosshairX < (boxX + boxSize) && crosshairY>boxY && crosshairY<(boxY + boxSize))
 	{
-		int cX = crosshairX + 4;
-		int cY = crosshairY + 4;
 
-
-		//Calculation of hitbox is a little weird. All calculations are based on the top left pixel, so we need to calculate for distance to
-		//center of crosshair, and take into consideration the width and height of the box.
-
-		//X values...
-		if(cX > boxX && cX < (boxX + 20))
+		//Top Left section
+		if(xToCenter >= 0 && yToCenter >= 0)
 		{
-			//Y values...
-			if(cY>boxY && cY<(boxY + 20))
+			if(xToCenter > yToCenter)
 			{
-				//Now that a hit has been registered, detect from which side.
-
-				int centerX = boxX + 10;
-				int centerY = boxY + 10;
-				int rightX = boxX + 20;
-				int bottomY = boxY + 20;
-
-				//crosshair distance INSIDE box:
-				int insideX = cX - boxX;
-				int insideY = cY - boxY;
-
-
-
-				if(insideX <= 10 && insideY <= 10)
+				//push right
+				if(boxX + boxSize < 799)
 				{
-					//Pos1 - OK!
-					if(insideX > insideY)
-					{
-						boxY = boxY + 5;
-					}
-					else
-					{					
-						boxX = boxX + 5;
-					}
+					boxX = boxX + speed;
 				}
-				else if(insideX >= 10 && insideY <= 10)
-				{
-					//Pos2 - ERROR!
-					if(insideX > insideY)
-					{
-						boxY = boxY + 5;
-					}
-					else
-					{
-						boxX = boxX - 5;
-					}
-				}
-				else if(insideX <= 10 && insideY >= 10)
-				{
-					//Pos3
-					if(insideX > insideY)
-					{
-						boxX = boxX - 5;
-					}
-					else
-					{
-						boxY = boxY - 5;
-					}
-					
-					
-				}
-				else if(insideX >= 10 && insideY >= 10)
-				{
-					insideY = insideY-10;
+			}
 
-					//Pos4
-					if(insideY > insideX)
-					{
-						boxY = boxY - 5;
-					}
-					else
-					{
-						boxX = boxX + 5;
-					}
-
-					
-					
+			if(xToCenter < yToCenter)
+			{
+				//push down
+				if(boxY + boxSize < 599)
+				{
+					boxY = boxY + speed;
 				}
+			}
+		}
 
-				
+		//Top Right section
+		if(xToCenter < 0 && yToCenter > 0)
+		{
+			if(abs(xToCenter) > yToCenter )
+			{
+				//push left
+				if(boxX > 0)
+				{
+					boxX = boxX - speed;
+				}
+			}
+
+			if(abs(xToCenter) < yToCenter)
+			{
+				//push down
+				if(boxY + boxSize < 599)
+				{
+					boxY = boxY + speed;
+				}
+			}
+		}
+
+		//Bottom Right section
+		if(xToCenter <= 0 && yToCenter <= 0)
+		{
+			if(abs(xToCenter) < abs(yToCenter))
+			{
+				//Push up
+				if(boxY > 0)
+				{
+					boxY = boxY - speed;
+				}
+			}
+
+			if(abs(xToCenter) > abs(yToCenter))
+			{
+				//Push left
+				if(boxX > 0)
+				{
+					boxX = boxX - speed;
+				}
+			}
+		}
+
+		if(xToCenter > 0 && yToCenter < 0)
+		{
+			if(xToCenter < abs(yToCenter))
+			{
+				//push up
+				if(boxY > 0)
+				{
+					boxY = boxY - speed;
+				}
+			}
+
+			if(xToCenter > abs(yToCenter))
+			{
+				//push right
+				if(boxX + boxSize < 799)
+				{
+					boxX = boxX + speed;
+				}
 			}
 		}
 	}
 }
+void Game::UpdateHorizontalLine()
+{
+	//Move the line to a new location, if the box crosses it
+	if(boxY < lineY && boxY + boxSize > lineY)
+	{
+		int random_integer = (rand() % 600);
+		lineY = random_integer;
+	}
+}
 
-
-
+//View
 void Game::ComposeFrame()
 {
-	
-
-	DrawBox(boxX,boxY);
-
+	DrawBox(boxX, boxY, boxSize);
 	DrawHorizontalLine(lineY);
-
 	DrawCrosshair(crosshairX, crosshairY);
-
-
-	// TODO: insert frame drawing code here
 }
